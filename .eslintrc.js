@@ -10,6 +10,9 @@ module.exports = {
     "plugin:prettier/recommended",
     "plugin:node/recommended",
   ],
+  rules: {
+    "prettier/prettier": 0,
+  },
   parserOptions: {
     ecmaVersion: 12,
   },

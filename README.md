@@ -1,3 +1,14 @@
+# Overview
+
+1. Swap ETH to WETH
+2. Deposit WETH into AAVE
+3. Borrow some asset using ETH as collateral
+4. Repay the borrowed asset
+
+# Useful documentation
+
+- [AAVE docs](https://docs.aave.com/developers/v/2.0/the-core-protocol/addresses-provider/ilendingpooladdressesprovider)
+
 # Advanced Sample Hardhat Project
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
