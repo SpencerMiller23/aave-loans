@@ -1,9 +1,12 @@
 # Overview
 
-1. Swap ETH to WETH
-2. Deposit WETH into AAVE
-3. Borrow some asset using ETH as collateral
-4. Repay the borrowed asset
+This project is a set of simple scripts for interacting with the AAVE protocol. In short, first the user will convert ETH into WETH and then deposit it into AAVE. Then the user will be able to borrow DAI by using the deposited WETH as collaral. Finally, you can repay the borrowed DAI.
+
+# Usage
+
+1) Run `npm install`
+2) Update the .env file with the necessary information
+3) Run `npx hardhat run scripts/aaveBorrow.js --network kovan`
 
 # Useful documentation
 

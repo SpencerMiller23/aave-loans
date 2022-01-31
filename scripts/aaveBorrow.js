@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+const { BigNumber } = require("ethers");
 const { ethers } = require("hardhat");
 const getWeth = require("./getWeth");
 
@@ -9,14 +10,17 @@ async function main() {
     const signer = await new ethers.Wallet(process.env.PRIVATE_KEY, ethers.provider);
     let tokenAddress;
     let daiEthPriceFeed;
+    let daiToken;
 
     if (network.name !== "kovan") {
         tokenAddress = process.env.WETH_TOKEN_MAINNET;
         daiEthPriceFeed = process.env.DAI_ETH_PRICEFEED_MAINNET;
+        daiToken = process.env.DAI_TOKEN_MAINNET;
         await getWeth();
     } else {
         tokenAddress = process.env.WETH_TOKEN_KOVAN;
         daiEthPriceFeed = process.env.DAI_ETH_PRICEFEED_KOVAN;
+        daiToken = process.env.DAI_TOKEN_KOVAN;
     }
     const lendingPool = await getLendingPool();
     await approveERC20(amount, lendingPool.address, tokenAddress, signer);
@@ -27,10 +31,28 @@ async function main() {
 
     const [borrowableEth, totalDebt] = await getBorrowingData(lendingPool, signer.address);
     const daiEthPrice = await getAssetPrice(daiEthPriceFeed);
+    let amountDaiToBorrow = (1/ daiEthPrice) * (borrowableEth * 0.95);
+    amountDaiToBorrow = BigNumber.from(amountDaiToBorrow);
+    const borrowTx = await lendingPool.borrow(daiToken, amountDaiToBorrow, 1, 0, signer.address);
+    await borrowTx.wait();
+    console.log("Borrowed DAI");
+
+    await repayAll(amount, lendingPool, signer);
+}
+
+async function repayAll(amount, lendingPool, account) {
+  await approveERC20(amount, lendingPool.address, process.env.DAI_TOKEN_KOVAN, account);
+  const repayTx = await lendingPool.repay(process.env.DAI_TOKEN_KOVAN, amount, 1, account.address);
+  await repayTx.wait();
+  console.log("Repaid DAI");
 }
 
 async function getAssetPrice(priceFeedAddress) {
-
+  const daiEthPriceFeed = await ethers.getVerifiedContractAt(priceFeedAddress);
+  let latestPrice = await daiEthPriceFeed.latestRoundData()[1];
+  latestPrice = BigNumber.from(latestPrice);
+  console.log(`DAI/ETH price: ${latestPrice}`);
+  return latestPrice;
 }
 
 async function getBorrowingData(lendingPool, account) {
