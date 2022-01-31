@@ -6,21 +6,42 @@ const amount = ethers.utils.parseEther("0.1");
 
 async function main() {
     const network = await ethers.provider.getNetwork();
-    const signer = await ethers.getSigners();
+    const signer = await new ethers.Wallet(process.env.PRIVATE_KEY, ethers.provider);
     let tokenAddress;
+    let daiEthPriceFeed;
 
     if (network.name !== "kovan") {
         tokenAddress = process.env.WETH_TOKEN_MAINNET;
-        getWeth();
+        daiEthPriceFeed = process.env.DAI_ETH_PRICEFEED_MAINNET;
+        await getWeth();
     } else {
         tokenAddress = process.env.WETH_TOKEN_KOVAN;
+        daiEthPriceFeed = process.env.DAI_ETH_PRICEFEED_KOVAN;
     }
     const lendingPool = await getLendingPool();
-    approveERC20(amount, lendingPool.address, tokenAddress, signer.address);
+    await approveERC20(amount, lendingPool.address, tokenAddress, signer);
     console.log("Depositing WETH");
     const tx = await lendingPool.deposit(tokenAddress, amount, signer.address, 0);
     await tx.wait();
     console.log("Deposited WETH");
+
+    const [borrowableEth, totalDebt] = await getBorrowingData(lendingPool, signer.address);
+    const daiEthPrice = await getAssetPrice(daiEthPriceFeed);
+}
+
+async function getAssetPrice(priceFeedAddress) {
+
+}
+
+async function getBorrowingData(lendingPool, account) {
+  let [totalCollateralEth, totalDebtEth, availableBorrowEth, currentLiquidationThreshold, ltv, healthFactor] = lendingPool.getUserAccountData(account);
+  totalCollateralEth = await ethers.utils.formatEther(totalCollateralEth);
+  totalDebtEth = await ethers.utils.formatEther(totalDebtEth);
+  availableBorrowEth = await ethers.utils.formatEther(availableBorrowEth);
+
+  console.log(`Total collateral: ${totalCollateralEth}`);
+  console.log(`Total debt: ${totalDebtEth}`);
+  console.log(`Total available eth to borrow: ${availableBorrowEth}`);
 }
 
 async function approveERC20(amount, spender, tokenAddress, account) {
